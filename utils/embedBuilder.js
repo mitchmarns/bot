@@ -9,7 +9,7 @@ const { EmbedBuilder } = require('discord.js');
  * @param {boolean} timestamp - Whether to add timestamp (default: true)
  * @returns {EmbedBuilder} - Discord embed object
  */
-function createEmbed(title, description, color = '#0099ff', timestamp = true) {
+function createEmbed(title, description, color = '#808080', timestamp = true) {
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
@@ -26,10 +26,11 @@ function createEmbed(title, description, color = '#0099ff', timestamp = true) {
  * Create a success embed (green color)
  * @param {string} title - The embed title
  * @param {string} description - The embed description
+ * @param {string} [color='#808080'] 
  * @returns {EmbedBuilder} - Discord embed object
  */
-function createSuccessEmbed(title, description) {
-  return createEmbed(title, description, '#00ff00');
+function createSuccessEmbed(title, description, color) {
+  return createEmbed(title, description, color);
 }
 
 /**
@@ -46,6 +47,7 @@ function createErrorEmbed(title, description) {
  * Create a player info embed with enhanced hockey stats
  * @param {Object} player - Player data
  * @param {Object} skills - Player skills data 
+ * @param {string} [color='#808080'] 
  * @returns {EmbedBuilder} - Discord embed object
  */
 function createPlayerEmbed(player, skills = null) {
