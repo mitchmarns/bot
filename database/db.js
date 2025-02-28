@@ -93,6 +93,40 @@ async function initDatabase() {
       FOREIGN KEY (player_id) REFERENCES players (id)
     )
   `);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS player_phones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER NOT NULL,
+      phone_number TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (player_id) REFERENCES players (id)
+    )
+  `);
+  
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS phone_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_phone_id INTEGER NOT NULL,
+      to_phone_id INTEGER NOT NULL,
+      message_text TEXT NOT NULL,
+      is_read BOOLEAN DEFAULT 0,
+      sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (from_phone_id) REFERENCES player_phones (id),
+      FOREIGN KEY (to_phone_id) REFERENCES player_phones (id)
+    )
+  `);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS player_triggers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER NOT NULL,
+      trigger_text TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (player_id) REFERENCES players (id)
+    )
+  `);
   
   console.log('Database tables initialized');
   
