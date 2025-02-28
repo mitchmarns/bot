@@ -137,11 +137,48 @@ async function getTeamById(id) {
   }
 }
 
+// Add to teamModel.js - Team statistics
+async function extendTeamSchema() {
+  const db = getDb();
+  
+  // Check if the new columns already exist
+  const columns = await db.all('PRAGMA table_info(teams)');
+  const columnNames = columns.map(c => c.name);
+  
+  // New team stats to track
+  const newStats = [
+    { name: 'goals_for', type: 'INTEGER DEFAULT 0' },
+    { name: 'goals_against', type: 'INTEGER DEFAULT 0' },
+    { name: 'shots_for', type: 'INTEGER DEFAULT 0' },
+    { name: 'shots_against', type: 'INTEGER DEFAULT 0' },
+    { name: 'power_plays', type: 'INTEGER DEFAULT 0' },
+    { name: 'power_play_goals', type: 'INTEGER DEFAULT 0' },
+    { name: 'penalties', type: 'INTEGER DEFAULT 0' },
+    { name: 'penalty_kill_success', type: 'INTEGER DEFAULT 0' },
+    { name: 'penalty_minutes', type: 'INTEGER DEFAULT 0' },
+    { name: 'home_wins', type: 'INTEGER DEFAULT 0' },
+    { name: 'home_losses', type: 'INTEGER DEFAULT 0' },
+    { name: 'away_wins', type: 'INTEGER DEFAULT 0' },
+    { name: 'away_losses', type: 'INTEGER DEFAULT 0' }
+  ];
+  
+  // Add each column if it doesn't exist
+  for (const stat of newStats) {
+    if (!columnNames.includes(stat.name)) {
+      await db.run(`ALTER TABLE teams ADD COLUMN ${stat.name} ${stat.type}`);
+      console.log(`Added ${stat.name} column to teams table`);
+    }
+  }
+  
+  console.log('Team schema extended with hockey stats');
+}
+
 module.exports = {
   getTeamByName,
   getAllTeams,
   getTeamStandings,
   createTeam,
   updateTeamRecord,
-  getTeamById
+  getTeamById,
+  extendTeamSchema
 };

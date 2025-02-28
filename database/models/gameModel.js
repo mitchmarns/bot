@@ -105,11 +105,47 @@ async function getGameEvents(gameId) {
   `, [gameId]);
 }
 
+async function extendGameEventsSchema() {
+  const db = getDb();
+  
+  // Add additional event types for hockey-specific events
+  // These are tracked in the existing game_events table
+  
+  // Also create a table for tracking game stats
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS game_stats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id INTEGER NOT NULL,
+      team_id INTEGER NOT NULL,
+      shots INTEGER DEFAULT 0,
+      hits INTEGER DEFAULT 0,
+      blocks INTEGER DEFAULT 0,
+      faceoff_wins INTEGER DEFAULT 0,
+      penalty_minutes INTEGER DEFAULT 0,
+      power_plays INTEGER DEFAULT 0,
+      power_play_goals INTEGER DEFAULT 0,
+      shots_period1 INTEGER DEFAULT 0,
+      shots_period2 INTEGER DEFAULT 0,
+      shots_period3 INTEGER DEFAULT 0,
+      shots_ot INTEGER DEFAULT 0,
+      pim_period1 INTEGER DEFAULT 0,
+      pim_period2 INTEGER DEFAULT 0,
+      pim_period3 INTEGER DEFAULT 0,
+      pim_ot INTEGER DEFAULT 0,
+      FOREIGN KEY (game_id) REFERENCES games (id),
+      FOREIGN KEY (team_id) REFERENCES teams (id)
+    )
+  `);
+  
+  console.log('Game events schema extended for hockey events');
+}
+
 module.exports = {
   scheduleGame,
   recordGameResult,
   getUpcomingGames,
   getRecentGames,
   recordGameEvent,
-  getGameEvents
+  getGameEvents,
+  extendGameEventsSchema
 };
