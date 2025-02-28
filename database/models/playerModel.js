@@ -213,6 +213,53 @@ async function getPlayerStatsByTeam(teamName, statType = 'points', limit = 10) {
   `, [teamName, limit]);
 }
 
+// Delete a player and all related data
+async function deletePlayer(playerId) {
+  const db = getDb();
+  
+  // Use a transaction to ensure all related data is deleted or none at all
+  await db.run('BEGIN TRANSACTION');
+  
+  try {
+    // Delete player's skills
+    await db.run('DELETE FROM player_skills WHERE player_id = ?', [playerId]);
+    
+    // Delete player's phone and messages
+    const phone = await db.get('SELECT id FROM player_phones WHERE player_id = ?', [playerId]);
+    if (phone) {
+      await db.run('DELETE FROM phone_messages WHERE from_phone_id = ? OR to_phone_id = ?', [phone.id, phone.id]);
+      await db.run('DELETE FROM player_phones WHERE id = ?', [phone.id]);
+    }
+    
+    // Delete player's triggers
+    await db.run('DELETE FROM player_triggers WHERE player_id = ?', [playerId]);
+    
+    // Delete player's game events
+    await db.run('DELETE FROM game_events WHERE player_id = ?', [playerId]);
+    
+    // Finally delete the player
+    await db.run('DELETE FROM players WHERE id = ?', [playerId]);
+    
+    // Commit the transaction
+    await db.run('COMMIT');
+    
+    return true;
+  } catch (error) {
+    // If anything goes wrong, rollback all changes
+    await db.run('ROLLBACK');
+    console.error('Error deleting player:', error);
+    throw error;
+  }
+}
+
+async function updatePlayerTeam(playerId, newTeamId) {
+  const db = getDb();
+  return await db.run(
+    'UPDATE players SET team_id = ? WHERE id = ?',
+    [newTeamId, playerId]
+  );
+}
+
 module.exports = {
   getPlayerByName,
   getPlayerById,
@@ -223,5 +270,7 @@ module.exports = {
   extendPlayerSchema,
   updatePlayerExtendedStats,
   getPlayerStatsLeaders,
-  getPlayerStatsByTeam
+  getPlayerStatsByTeam,
+  deletePlayer,
+  updatePlayerTeam
 };

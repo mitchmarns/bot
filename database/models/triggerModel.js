@@ -40,9 +40,15 @@ async function deleteTrigger(triggerId, userId) {
   );
 }
 
+async function getPlayerTriggers(playerId) {
+  const db = getDb();
+  return await db.all('SELECT * FROM player_triggers WHERE player_id = ?', [playerId]);
+}
+
 module.exports = {
   createTrigger,
   getTriggerByText,
   getUserTriggers,
-  deleteTrigger
+  deleteTrigger,
+  getPlayerTriggers
 };
