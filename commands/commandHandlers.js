@@ -17,6 +17,17 @@ const viewConversation = require('./viewConversation');
 const addTrigger = require('./addTrigger');
 const myTriggers = require('./myTriggers');
 const removeTrigger = require('./removeTrigger');
+const removePlayer = require('./removePlayer');
+const gameHistory = require('./gameHistory');
+const gameDetails = require('./gameDetails');
+const teamMatchup = require('./teamMatchup');
+const trade = require('./trade');
+const tradeHistory = require('./tradeHistory');
+const seasonSummary = require('./seasonSummary');
+const playoffMatchups = require('./playoffMatchups');
+const findSeries = require('./findSeries');
+const simulateSeries = require('./simulateSeries');
+const startSeason = require('./startSeason');
 
 // Export all handlers as a single object
 module.exports = {
@@ -37,5 +48,16 @@ module.exports = {
   conversation: viewConversation,
   addtrigger: addTrigger,
   mytriggers: myTriggers,
-  removetrigger: removeTrigger
+  removetrigger: removeTrigger,
+  removeplayer: removePlayer,
+  gamehistory: gameHistory,
+  gamedetails: gameDetails,
+  matchup: teamMatchup,
+  trade: trade,
+  tradehistory: tradeHistory,
+  seasonsummary: seasonSummary,
+  playoffmatchups: playoffMatchups,
+  findseries: findSeries,
+  simulateseries: simulateSeries,
+  startseason: startSeason
 };

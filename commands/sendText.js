@@ -55,15 +55,30 @@ async function sendText(interaction) {
   // Send the message
   await phoneModel.sendMessage(fromPhone.id, toPhone.id, messageContent);
   
-  // Create the response
-  const embed = new EmbedBuilder()
-    .setColor('#00FF00')
-    .setTitle('Message Sent')
-    .setDescription(`From: ${fromPlayer.name} (${fromPhone.phone_number})\nTo: ${toPlayer.name} (${toPhone.phone_number})`)
+  // Create the public text message embed
+  const messageEmbed = new EmbedBuilder()
+    .setColor('#0099ff')
+    .setTitle('📱 Text Message')
+    .setDescription(`**From:** ${fromPlayer.name} (${fromPhone.phone_number})\n**To:** ${toPlayer.name} (${toPhone.phone_number})`)
     .addFields({ name: 'Message', value: messageContent })
     .setTimestamp();
   
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  // Add sender's image if available
+  if (fromPlayer.image_url) {
+    messageEmbed.setThumbnail(fromPlayer.image_url);
+  }
+  
+  // Send the public message to the channel
+  await interaction.reply({ embeds: [messageEmbed] });
+  
+  // Also notify the sender with a confirmation (ephemeral)
+  const confirmEmbed = new EmbedBuilder()
+    .setColor('#00FF00')
+    .setTitle('✅ Message Sent')
+    .setDescription(`Your message has been delivered and is visible in the channel.`)
+    .setTimestamp();
+  
+  await interaction.followUp({ embeds: [confirmEmbed], ephemeral: true });
 }
 
 module.exports = sendText;
