@@ -161,7 +161,109 @@ const commands = [
       .setDescription('Goaltending skill (1-100)')
       .setMinValue(1)
       .setMaxValue(100)
+      .setRequired(false)),
+  new SlashCommandBuilder()
+  .setName('stats')
+  .setDescription('Display player statistics leaderboards')
+  .addStringOption(option => 
+    option.setName('stattype')
+      .setDescription('Type of stats to display')
+      .setRequired(false)
+      .addChoices(
+        { name: 'Points (Goals + Assists)', value: 'points' },
+        { name: 'Goals', value: 'goals' },
+        { name: 'Assists', value: 'assists' },
+        { name: 'Games Played', value: 'games' },
+        { name: 'Points Per Game', value: 'ppg' }
+      ))
+  .addStringOption(option => 
+    option.setName('team')
+      .setDescription('Filter by team (leave empty for league-wide stats)')
       .setRequired(false))
+  .addIntegerOption(option => 
+    option.setName('limit')
+      .setDescription('Number of players to show (default: 10)')
+      .setMinValue(1)
+      .setMaxValue(50)
+      .setRequired(false)),
+  // Phone assignment command
+  new SlashCommandBuilder()
+  .setName('assignphone')
+  .setDescription('Assign a phone number to your character')
+  .addStringOption(option => 
+    option.setName('player')
+      .setDescription('Your player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('number')
+      .setDescription('Phone number to assign')
+      .setRequired(true)),
+
+  // Text messaging commands
+  new SlashCommandBuilder()
+  .setName('text')
+  .setDescription('Send a text message to another player')
+  .addStringOption(option => 
+    option.setName('from')
+      .setDescription('Your player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('to')
+      .setDescription('Recipient phone number or player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('message')
+      .setDescription('Message content')
+      .setRequired(true)),
+
+  // View inbox
+  new SlashCommandBuilder()
+  .setName('inbox')
+  .setDescription('View your character\'s message inbox')
+  .addStringOption(option => 
+    option.setName('player')
+      .setDescription('Your player name')
+      .setRequired(true)),
+
+  // View conversation
+  new SlashCommandBuilder()
+  .setName('conversation')
+  .setDescription('View a conversation with another player')
+  .addStringOption(option => 
+    option.setName('player')
+      .setDescription('Your player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('with')
+      .setDescription('Other player\'s name or phone number')
+      .setRequired(true)),
+
+  // Create trigger command
+  new SlashCommandBuilder()
+  .setName('addtrigger')
+  .setDescription('Add a trigger prefix for your character')
+  .addStringOption(option => 
+    option.setName('player')
+      .setDescription('Your player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('trigger')
+      .setDescription('Trigger text (e.g., "p!", "#john", etc.)')
+      .setRequired(true)),
+
+  // List triggers command
+  new SlashCommandBuilder()
+  .setName('mytriggers')
+  .setDescription('List all your character triggers'),
+
+  // Remove trigger command
+  new SlashCommandBuilder()
+  .setName('removetrigger')
+  .setDescription('Remove a character trigger')
+  .addStringOption(option => 
+    option.setName('trigger')
+      .setDescription('Trigger to remove')
+      .setRequired(true))
 ];
 
 async function registerCommands() {
