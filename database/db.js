@@ -129,6 +129,23 @@ async function initDatabase() {
   `);
   
   console.log('Database tables initialized');
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS trade_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER NOT NULL,
+      from_team_id INTEGER NOT NULL,
+      to_team_id INTEGER NOT NULL,
+      trade_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      user_id TEXT NOT NULL,
+      notes TEXT,
+      FOREIGN KEY (player_id) REFERENCES players (id),
+      FOREIGN KEY (from_team_id) REFERENCES teams (id),
+      FOREIGN KEY (to_team_id) REFERENCES teams (id)
+    )
+  `);
+  
+  console.log('Trade history table initialized');
   
   return db;
 }
