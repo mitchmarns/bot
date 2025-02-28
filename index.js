@@ -23,15 +23,35 @@ client.once('ready', async () => {
   
   // Initialize the database
   try {
-    await initDatabase();
+    const db = await initDatabase();
+    console.log('Database initialized successfully');
     
     // Extend player schema with hockey stats
     const playerModel = require('./database/models/playerModel');
     await playerModel.extendPlayerSchema();
+    console.log('Player schema extended successfully');
     
-    console.log('Hockey Roleplay Bot is online with SQLite database!');
+    // Initialize season schema
+    try {
+      const seasonModel = require('./database/models/seasonModel');
+      await seasonModel.initSeasonSchema();
+      console.log('Season schema initialized successfully');
+    } catch (seasonError) {
+      console.error('Error initializing season schema:', seasonError);
+    }
+    
+    // Extend game schema for seasons
+    try {
+      const gameModel = require('./database/models/gameModel');
+      await gameModel.extendGamesSchema();
+      console.log('Game schema extended for seasons');
+    } catch (gameError) {
+      console.error('Error extending game schema:', gameError);
+    }
+    
+    console.log('Hockey Roleplay Bot is online with all schemas initialized!');
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('Critical error initializing database:', error);
   }
 });
 
