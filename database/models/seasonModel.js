@@ -1,40 +1,10 @@
-// Season management database operations
-const path = require('path');
-const fs = require('fs');
-
-// Helper function to find db.js file (similar to other models)
-function findDbModule() {
-  const possiblePaths = [
-    '../db.js',
-    '../../database/db.js',
-    '../database/db.js',
-    './db.js',
-    path.resolve(__dirname, '../db.js')
-  ];
-  
-  console.log('Current directory for seasonModel.js:', __dirname);
-  
-  for (const dbPath of possiblePaths) {
-    try {
-      if (fs.existsSync(require.resolve(dbPath))) {
-        console.log('Found db.js at:', dbPath);
-        return require(dbPath);
-      }
-    } catch (error) {
-      // Continue to next possible path
-    }
-  }
-  
-  throw new Error('Could not find db.js module. Please check your folder structure.');
-}
-
-// Get database access
-const { getDb } = findDbModule();
+// Season management database operations - Updated for multi-server support
+const { getDb } = require('../db');
 
 // Initialize seasons schema if not already done
-async function initSeasonSchema() {
-  console.log('Initializing season schema...');
-  const db = getDb();
+async function initSeasonSchema(guildId) {
+  console.log(`Initializing season schema for guild ${guildId}...`);
+  const db = getDb(guildId);
   
   try {
     // Check if seasons table exists
@@ -42,7 +12,7 @@ async function initSeasonSchema() {
     const seasonsTableExists = tablesResult.length > 0;
     
     if (!seasonsTableExists) {
-      console.log('Creating seasons table...');
+      console.log(`Creating seasons table for guild ${guildId}...`);
       // Create seasons table
       await db.exec(`
         CREATE TABLE IF NOT EXISTS seasons (
@@ -56,13 +26,13 @@ async function initSeasonSchema() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      console.log('Seasons table created successfully');
+      console.log(`Seasons table created successfully for guild ${guildId}`);
     } else {
-      console.log('Seasons table already exists');
+      console.log(`Seasons table already exists for guild ${guildId}`);
     }
     
     // Create playoff series table
-    console.log('Creating playoff_series table...');
+    console.log(`Creating playoff_series table for guild ${guildId}...`);
     await db.exec(`
       CREATE TABLE IF NOT EXISTS playoff_series (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,52 +54,52 @@ async function initSeasonSchema() {
         FOREIGN KEY (next_series_id) REFERENCES playoff_series (id)
       )
     `);
-    console.log('Playoff series table created/verified successfully');
+    console.log(`Playoff series table created/verified successfully for guild ${guildId}`);
     
     // Add season_id column to games table if it doesn't exist
-    console.log('Checking games table for season_id column...');
+    console.log(`Checking games table for season_id column for guild ${guildId}...`);
     try {
       const gamesColumns = await db.all('PRAGMA table_info(games)');
       const columnNames = gamesColumns.map(c => c.name);
       
       // Add season_id if it doesn't exist
       if (!columnNames.includes('season_id')) {
-        console.log('Adding season_id column to games table...');
+        console.log(`Adding season_id column to games table for guild ${guildId}...`);
         await db.exec('ALTER TABLE games ADD COLUMN season_id INTEGER REFERENCES seasons(id)');
-        console.log('Added season_id column to games table');
+        console.log(`Added season_id column to games table for guild ${guildId}`);
       } else {
-        console.log('season_id column already exists in games table');
+        console.log(`season_id column already exists in games table for guild ${guildId}`);
       }
       
       // Add is_playoff_game if it doesn't exist
       if (!columnNames.includes('is_playoff_game')) {
-        console.log('Adding is_playoff_game column to games table...');
+        console.log(`Adding is_playoff_game column to games table for guild ${guildId}...`);
         await db.exec('ALTER TABLE games ADD COLUMN is_playoff_game BOOLEAN DEFAULT 0');
-        console.log('Added is_playoff_game column to games table');
+        console.log(`Added is_playoff_game column to games table for guild ${guildId}`);
       } else {
-        console.log('is_playoff_game column already exists in games table');
+        console.log(`is_playoff_game column already exists in games table for guild ${guildId}`);
       }
     } catch (gamesError) {
-      console.error('Error checking/updating games table:', gamesError);
+      console.error(`Error checking/updating games table for guild ${guildId}:`, gamesError);
       console.log('This might be normal if the games table doesn\'t exist yet');
     }
     
-    console.log('Season schema initialization completed successfully');
+    console.log(`Season schema initialization completed successfully for guild ${guildId}`);
   } catch (error) {
-    console.error('Error in season schema initialization:', error);
+    console.error(`Error in season schema initialization for guild ${guildId}:`, error);
     throw error;
   }
 }
 
 // Get the currently active season
-async function getActiveSeason() {
-  const db = getDb();
+async function getActiveSeason(guildId) {
+  const db = getDb(guildId);
   return await db.get('SELECT * FROM seasons WHERE is_active = 1');
 }
 
 // End the current season
-async function endSeason(seasonId, endDate) {
-  const db = getDb();
+async function endSeason(seasonId, endDate, guildId) {
+  const db = getDb(guildId);
   return await db.run(
     'UPDATE seasons SET is_active = 0, end_date = ? WHERE id = ?',
     [endDate, seasonId]
@@ -137,14 +107,14 @@ async function endSeason(seasonId, endDate) {
 }
 
 // Get all seasons
-async function getAllSeasons() {
-  const db = getDb();
+async function getAllSeasons(guildId) {
+  const db = getDb(guildId);
   return await db.all('SELECT * FROM seasons ORDER BY start_date DESC');
 }
 
 // Start playoffs for the current season
-async function startPlayoffs(seasonId, teamIds) {
-  const db = getDb();
+async function startPlayoffs(seasonId, teamIds, guildId) {
+  const db = getDb(guildId);
   
   // Update season status
   await db.run(
@@ -218,12 +188,12 @@ async function startPlayoffs(seasonId, teamIds) {
     currentRoundSeries = nextRound;
   }
   
-  return await getPlayoffBracket(seasonId);
+  return await getPlayoffBracket(seasonId, guildId);
 }
 
 // Record a playoff game result
-async function recordPlayoffGame(seriesId, winningTeamId) {
-  const db = getDb();
+async function recordPlayoffGame(seriesId, winningTeamId, guildId) {
+  const db = getDb(guildId);
   
   // Get the current series
   const series = await db.get('SELECT * FROM playoff_series WHERE id = ?', [seriesId]);
@@ -315,8 +285,8 @@ async function recordPlayoffGame(seriesId, winningTeamId) {
 }
 
 // Get the current playoff bracket
-async function getPlayoffBracket(seasonId) {
-  const db = getDb();
+async function getPlayoffBracket(seasonId, guildId) {
+  const db = getDb(guildId);
   
   // Get all series for this season
   const allSeries = await db.all(`
@@ -345,8 +315,8 @@ async function getPlayoffBracket(seasonId) {
 }
 
 // Get details for a specific playoff series
-async function getPlayoffSeries(seriesId) {
-  const db = getDb();
+async function getPlayoffSeries(seriesId, guildId) {
+  const db = getDb(guildId);
   
   return await db.get(`
     SELECT ps.*, 
@@ -364,8 +334,8 @@ async function getPlayoffSeries(seriesId) {
 }
 
 // Get playoff stats for a season
-async function getPlayoffStats(seasonId) {
-  const db = getDb();
+async function getPlayoffStats(seasonId, guildId) {
+  const db = getDb(guildId);
   
   // Get player stats in playoff games for this season
   return await db.all(`
@@ -389,11 +359,11 @@ async function getPlayoffStats(seasonId) {
 }
 
 // Simulate an entire playoff series (for testing or automated playoffs)
-async function simulatePlayoffSeries(seriesId, simulateGameFunction) {
-  const db = getDb();
+async function simulatePlayoffSeries(seriesId, simulateGameFunction, guildId) {
+  const db = getDb(guildId);
   
   // Get the series
-  const series = await getPlayoffSeries(seriesId);
+  const series = await getPlayoffSeries(seriesId, guildId);
   if (!series) {
     throw new Error(`Playoff series with ID ${seriesId} not found.`);
   }
@@ -431,11 +401,11 @@ async function simulatePlayoffSeries(seriesId, simulateGameFunction) {
     }
     
     // Simulate the game
-    const gameResult = await simulateGameFunction(homeTeam, awayTeam, series.id);
+    const gameResult = await simulateGameFunction(homeTeam, awayTeam, series.id, guildId);
     
     // Record the result
     const winningTeamId = gameResult.homeScore > gameResult.awayScore ? homeTeam.id : awayTeam.id;
-    const gameOutcome = await recordPlayoffGame(seriesId, winningTeamId);
+    const gameOutcome = await recordPlayoffGame(seriesId, winningTeamId, guildId);
     
     results.push({
       game: gameNumber,
@@ -457,7 +427,7 @@ async function simulatePlayoffSeries(seriesId, simulateGameFunction) {
   }
   
   // Get the final updated series
-  const finalSeries = await getPlayoffSeries(seriesId);
+  const finalSeries = await getPlayoffSeries(seriesId, guildId);
   
   return {
     results: results,
@@ -469,17 +439,17 @@ async function simulatePlayoffSeries(seriesId, simulateGameFunction) {
   };
 }
 
-async function createSeason(name, startDate) {
-  console.log(`Creating new season: "${name}" starting ${startDate}`);
+async function createSeason(name, startDate, guildId) {
+  console.log(`Creating new season: "${name}" starting ${startDate} for guild ${guildId}`);
   
-  const db = getDb();
+  const db = getDb(guildId);
   
   // Check if there's an active season first
   try {
-    console.log('Checking for active seasons...');
-    const activeSeason = await getActiveSeason();
+    console.log(`Checking for active seasons in guild ${guildId}...`);
+    const activeSeason = await getActiveSeason(guildId);
     if (activeSeason) {
-      console.log(`Found active season: ${activeSeason.name} (ID: ${activeSeason.id})`);
+      console.log(`Found active season: ${activeSeason.name} (ID: ${activeSeason.id}) in guild ${guildId}`);
       throw new Error('There is already an active season. End it before starting a new one.');
     }
   } catch (error) {
@@ -487,32 +457,32 @@ async function createSeason(name, startDate) {
     if (!error.message.includes('no such table')) {
       throw error;
     }
-    console.log('No active seasons found (or seasons table doesn\'t exist yet)');
+    console.log(`No active seasons found (or seasons table doesn't exist yet) in guild ${guildId}`);
   }
   
   // Ensure the seasons table exists
   try {
     const tablesResult = await db.all("SELECT name FROM sqlite_master WHERE type='table' AND name='seasons'");
     if (tablesResult.length === 0) {
-      console.log('Seasons table not found, initializing schema...');
-      await initSeasonSchema();
+      console.log(`Seasons table not found in guild ${guildId}, initializing schema...`);
+      await initSeasonSchema(guildId);
     }
   } catch (error) {
-    console.error('Error checking for seasons table:', error);
+    console.error(`Error checking for seasons table in guild ${guildId}:`, error);
     throw new Error(`Failed to verify seasons table: ${error.message}`);
   }
   
   // Insert the new season
   try {
-    console.log('Inserting new season into database...');
+    console.log(`Inserting new season into database for guild ${guildId}...`);
     const result = await db.run(
       'INSERT INTO seasons (name, start_date) VALUES (?, ?)',
       [name, startDate]
     );
-    console.log(`Season created successfully with ID: ${result.lastID}`);
+    console.log(`Season created successfully with ID: ${result.lastID} in guild ${guildId}`);
     return result;
   } catch (error) {
-    console.error('Error inserting new season:', error);
+    console.error(`Error inserting new season in guild ${guildId}:`, error);
     throw new Error(`Failed to create new season: ${error.message}`);
   }
 }

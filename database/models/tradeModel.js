@@ -1,9 +1,9 @@
-// Trade-related database operations
+// Trade-related database operations - Updated for multi-server support
 const { getDb } = require('../db');
 
 // Record a trade in the history
-async function recordTrade(playerId, fromTeamId, toTeamId, userId, notes = null) {
-  const db = getDb();
+async function recordTrade(playerId, fromTeamId, toTeamId, userId, notes = null, guildId) {
+  const db = getDb(guildId);
   return await db.run(
     'INSERT INTO trade_history (player_id, from_team_id, to_team_id, user_id, notes) VALUES (?, ?, ?, ?, ?)',
     [playerId, fromTeamId, toTeamId, userId, notes]
@@ -11,8 +11,8 @@ async function recordTrade(playerId, fromTeamId, toTeamId, userId, notes = null)
 }
 
 // Get recent trades
-async function getRecentTrades(limit = 10) {
-  const db = getDb();
+async function getRecentTrades(limit = 10, guildId) {
+  const db = getDb(guildId);
   return await db.all(`
     SELECT 
       t.*,
@@ -33,8 +33,8 @@ async function getRecentTrades(limit = 10) {
 }
 
 // Get trade history for a specific player
-async function getPlayerTradeHistory(playerId) {
-  const db = getDb();
+async function getPlayerTradeHistory(playerId, guildId) {
+  const db = getDb(guildId);
   return await db.all(`
     SELECT 
       t.*,
@@ -51,8 +51,8 @@ async function getPlayerTradeHistory(playerId) {
 }
 
 // Get trade history for a specific team
-async function getTeamTradeHistory(teamId, limit = 20) {
-  const db = getDb();
+async function getTeamTradeHistory(teamId, limit = 20, guildId) {
+  const db = getDb(guildId);
   return await db.all(`
     SELECT 
       t.*,

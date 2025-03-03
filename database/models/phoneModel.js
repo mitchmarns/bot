@@ -1,22 +1,23 @@
+// phoneModel.js - Updated for multi-server support
 const { getDb } = require('../db');
 
 // Get phone by player ID
-async function getPlayerPhone(playerId) {
-  const db = getDb();
+async function getPlayerPhone(playerId, guildId) {
+  const db = getDb(guildId);
   return await db.get('SELECT * FROM player_phones WHERE player_id = ?', [playerId]);
 }
 
 // Get phone by number
-async function getPhoneByNumber(phoneNumber) {
-  const db = getDb();
+async function getPhoneByNumber(phoneNumber, guildId) {
+  const db = getDb(guildId);
   return await db.get('SELECT * FROM player_phones WHERE phone_number = ? COLLATE NOCASE', [phoneNumber]);
 }
 
 // Create or update phone
-async function assignPhoneToPlayer(playerId, phoneNumber) {
-  const db = getDb();
+async function assignPhoneToPlayer(playerId, phoneNumber, guildId) {
+  const db = getDb(guildId);
   // Check if player already has a phone
-  const existingPhone = await getPlayerPhone(playerId);
+  const existingPhone = await getPlayerPhone(playerId, guildId);
   
   if (existingPhone) {
     // Update existing phone number
@@ -34,8 +35,8 @@ async function assignPhoneToPlayer(playerId, phoneNumber) {
 }
 
 // Send a message
-async function sendMessage(fromPhoneId, toPhoneId, messageText) {
-  const db = getDb();
+async function sendMessage(fromPhoneId, toPhoneId, messageText, guildId) {
+  const db = getDb(guildId);
   return await db.run(
     'INSERT INTO phone_messages (from_phone_id, to_phone_id, message_text) VALUES (?, ?, ?)',
     [fromPhoneId, toPhoneId, messageText]
@@ -43,8 +44,8 @@ async function sendMessage(fromPhoneId, toPhoneId, messageText) {
 }
 
 // Get conversation between two phones
-async function getConversation(phoneId1, phoneId2, limit = 20) {
-  const db = getDb();
+async function getConversation(phoneId1, phoneId2, limit = 20, guildId) {
+  const db = getDb(guildId);
   return await db.all(`
     SELECT * FROM phone_messages 
     WHERE (from_phone_id = ? AND to_phone_id = ?) OR (from_phone_id = ? AND to_phone_id = ?)
@@ -54,8 +55,8 @@ async function getConversation(phoneId1, phoneId2, limit = 20) {
 }
 
 // Get all message previews for a phone (latest message from each conversation)
-async function getMessagePreviews(phoneId) {
-  const db = getDb();
+async function getMessagePreviews(phoneId, guildId) {
+  const db = getDb(guildId);
   return await db.all(`
     WITH LatestMessages AS (
       SELECT 
@@ -82,8 +83,8 @@ async function getMessagePreviews(phoneId) {
 }
 
 // Mark messages as read
-async function markMessagesAsRead(toPhoneId, fromPhoneId) {
-  const db = getDb();
+async function markMessagesAsRead(toPhoneId, fromPhoneId, guildId) {
+  const db = getDb(guildId);
   return await db.run(`
     UPDATE phone_messages
     SET is_read = 1

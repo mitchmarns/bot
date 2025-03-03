@@ -1,44 +1,10 @@
 // Team-related database operations
-const path = require('path');
-const fs = require('fs');
-
-// Helper function to find db.js file
-function findDbModule() {
-  // Try different possible locations
-  const possiblePaths = [
-    '../db.js',                    // If teamModel.js is in models/ and db.js is in database/
-    '../../database/db.js',        // If teamModel.js is in database/models/ and db.js is in database/
-    '../database/db.js',           // If teamModel.js is in models/ and db.js is in database/
-    './db.js',                     // If teamModel.js and db.js are in the same directory
-    path.resolve(__dirname, '../db.js')  // Absolute path using __dirname
-  ];
-  
-  // Log current directory for debugging
-  console.log('Current directory for teamModel.js:', __dirname);
-  
-  for (const dbPath of possiblePaths) {
-    try {
-      // Check if file exists before requiring
-      if (fs.existsSync(require.resolve(dbPath))) {
-        console.log('Found db.js at:', dbPath);
-        return require(dbPath);
-      }
-    } catch (error) {
-      // Continue to next possible path
-    }
-  }
-  
-  // If none of the paths worked, throw an error
-  throw new Error('Could not find db.js module. Please check your folder structure.');
-}
-
-// Get database access
-const { getDb } = findDbModule();
+const { getDb } = require('../db');
 
 // Get a team by name
-async function getTeamByName(name) {
+async function getTeamByName(name, guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     return await db.get('SELECT * FROM teams WHERE name = ? COLLATE NOCASE', [name]);
   } catch (error) {
     console.error('Error in getTeamByName:', error);
@@ -47,9 +13,9 @@ async function getTeamByName(name) {
 }
 
 // Get all teams
-async function getAllTeams() {
+async function getAllTeams(guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     return await db.all('SELECT * FROM teams');
   } catch (error) {
     console.error('Error in getAllTeams:', error);
@@ -58,9 +24,9 @@ async function getAllTeams() {
 }
 
 // Get teams sorted by points
-async function getTeamStandings() {
+async function getTeamStandings(guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     return await db.all(`
       SELECT *, (wins * 2 + ties) as points 
       FROM teams 
@@ -73,9 +39,9 @@ async function getTeamStandings() {
 }
 
 // Create a team
-async function createTeam(name, city, logo) {
+async function createTeam(name, city, logo, guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     
     // Check table schema first
     console.log('Checking teams table schema...');
@@ -110,9 +76,9 @@ async function createTeam(name, city, logo) {
 }
 
 // Update team record after a game
-async function updateTeamRecord(teamId, result) {
+async function updateTeamRecord(teamId, result, guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     if (result === 'win') {
       return await db.run('UPDATE teams SET wins = wins + 1 WHERE id = ?', [teamId]);
     } else if (result === 'loss') {
@@ -127,9 +93,9 @@ async function updateTeamRecord(teamId, result) {
 }
 
 // Get team by ID
-async function getTeamById(id) {
+async function getTeamById(id, guildId) {
   try {
-    const db = getDb();
+    const db = getDb(guildId);
     return await db.get('SELECT * FROM teams WHERE id = ?', [id]);
   } catch (error) {
     console.error('Error in getTeamById:', error);
@@ -138,8 +104,8 @@ async function getTeamById(id) {
 }
 
 // Add to teamModel.js - Team statistics
-async function extendTeamSchema() {
-  const db = getDb();
+async function extendTeamSchema(guildId) {
+  const db = getDb(guildId);
   
   // Check if the new columns already exist
   const columns = await db.all('PRAGMA table_info(teams)');
@@ -166,11 +132,11 @@ async function extendTeamSchema() {
   for (const stat of newStats) {
     if (!columnNames.includes(stat.name)) {
       await db.run(`ALTER TABLE teams ADD COLUMN ${stat.name} ${stat.type}`);
-      console.log(`Added ${stat.name} column to teams table`);
+      console.log(`Added ${stat.name} column to teams table for guild ${guildId}`);
     }
   }
   
-  console.log('Team schema extended with hockey stats');
+  console.log(`Team schema extended with hockey stats for guild ${guildId}`);
 }
 
 module.exports = {

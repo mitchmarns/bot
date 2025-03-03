@@ -1,43 +1,9 @@
-// skillsModel.js - Place in the database/models directory
-const path = require('path');
-const fs = require('fs');
-
-// Helper function to find db.js file (same as other models)
-function findDbModule() {
-  // Try different possible locations
-  const possiblePaths = [
-    '../db.js',                    // If skillsModel.js is in models/ and db.js is in database/
-    '../../database/db.js',        // If skillsModel.js is in database/models/ and db.js is in database/
-    '../database/db.js',           // If skillsModel.js is in models/ and db.js is in database/
-    './db.js',                     // If skillsModel.js and db.js are in the same directory
-    path.resolve(__dirname, '../db.js')  // Absolute path using __dirname
-  ];
-  
-  // Log current directory for debugging
-  console.log('Current directory for skillsModel.js:', __dirname);
-  
-  for (const dbPath of possiblePaths) {
-    try {
-      // Check if file exists before requiring
-      if (fs.existsSync(require.resolve(dbPath))) {
-        console.log('Found db.js at:', dbPath);
-        return require(dbPath);
-      }
-    } catch (error) {
-      // Continue to next possible path
-    }
-  }
-  
-  // If none of the paths worked, throw an error
-  throw new Error('Could not find db.js module. Please check your folder structure.');
-}
-
-// Get database access
-const { getDb } = findDbModule();
+// skillsModel.js - Updated for multi-server support
+const { getDb } = require('../db');
 
 // Get skills for a player
-async function getPlayerSkills(playerId) {
-  const db = getDb();
+async function getPlayerSkills(playerId, guildId) {
+  const db = getDb(guildId);
   const skills = await db.get('SELECT * FROM player_skills WHERE player_id = ?', [playerId]);
   
   // Return default skills if none found
@@ -57,8 +23,8 @@ async function getPlayerSkills(playerId) {
 }
 
 // Set skills for a player
-async function setPlayerSkills(playerId, skillsData) {
-  const db = getDb();
+async function setPlayerSkills(playerId, skillsData, guildId) {
+  const db = getDb(guildId);
   
   // Check if player already has skills
   const existingSkills = await db.get('SELECT id FROM player_skills WHERE player_id = ?', [playerId]);
