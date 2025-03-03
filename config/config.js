@@ -6,8 +6,10 @@ module.exports = {
   TOKEN: process.env.DISCORD_TOKEN,
   CLIENT_ID: process.env.CLIENT_ID,
   
-  // Database configuration
-  DB_PATH: './hockey_league.db',
+  // Database configuration - modified for multi-server support
+  getDbPath: function(guildId) {
+    return `./hockey_league_${guildId}.db`;
+  },
   
   // Other configuration settings can be added here
   POSITIONS: [
