@@ -1,20 +1,26 @@
 // Database connection and initialization
 const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
-const { DB_PATH } = require('../config/config');
+const { getDbPath } = require('../config/config');
 
-// Database connection
-let db;
+// Store database connections by guild ID
+const connections = {};
 
-// Initialize the database
-async function initDatabase() {
+// Initialize the database for a specific guild
+async function initDatabase(guildId) {
+  if (!guildId) {
+    throw new Error('Guild ID is required to initialize database');
+  }
+  
+  const dbPath = getDbPath(guildId);
+  
   // Open the database
-  db = await open({
-    filename: DB_PATH,
+  const db = await open({
+    filename: dbPath,
     driver: sqlite3.Database
   });
   
-  console.log('Connected to SQLite database');
+  console.log(`Connected to SQLite database for guild ${guildId}`);
   
   // Create tables if they don't exist
   await db.exec(`
@@ -127,8 +133,6 @@ async function initDatabase() {
       FOREIGN KEY (player_id) REFERENCES players (id)
     )
   `);
-  
-  console.log('Database tables initialized');
 
   await db.exec(`
     CREATE TABLE IF NOT EXISTS trade_history (
@@ -145,17 +149,25 @@ async function initDatabase() {
     )
   `);
   
-  console.log('Trade history table initialized');
+  console.log(`Database tables initialized for guild ${guildId}`);
+  
+  // Store the connection
+  connections[guildId] = db;
   
   return db;
 }
 
-// Get database connection
-function getDb() {
-  if (!db) {
-    throw new Error('Database not initialized. Call initDatabase() first.');
+// Get database connection for a specific guild
+function getDb(guildId) {
+  if (!guildId) {
+    throw new Error('Guild ID is required to get database connection');
   }
-  return db;
+  
+  if (!connections[guildId]) {
+    throw new Error(`Database not initialized for guild ${guildId}. Call initDatabase(${guildId}) first.`);
+  }
+  
+  return connections[guildId];
 }
 
 module.exports = {
