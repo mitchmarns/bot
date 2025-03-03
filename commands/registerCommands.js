@@ -453,6 +453,51 @@ new SlashCommandBuilder()
     option.setName('series')
       .setDescription('Playoff series ID')
       .setRequired(true)),
+  new SlashCommandBuilder()
+  .setName('instagram')
+  .setDescription('Create an Instagram post for your character')
+  .addStringOption(option => 
+    option.setName('player')
+      .setDescription('Your player name')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('image')
+      .setDescription('URL to image for the post')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('caption')
+      .setDescription('Caption for your post')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('hashtags')
+      .setDescription('Hashtags (comma separated)')
+      .setRequired(false))
+  .addStringOption(option => 
+    option.setName('location')
+      .setDescription('Location tag (e.g., "Hockey Arena", "Downtown", "Team Practice Facility")')
+      .setRequired(false)),
+  new SlashCommandBuilder()
+  .setName('createbotteam')
+  .setDescription('Create an AI-controlled bot team with generated players')
+  .addStringOption(option => 
+    option.setName('name')
+      .setDescription('Team name (will be prefixed with [BOT])')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('city')
+      .setDescription('Team city')
+      .setRequired(true))
+  .addStringOption(option => 
+    option.setName('logo')
+      .setDescription('Team logo URL')
+      .setRequired(false))
+  .addIntegerOption(option => 
+    option.setName('skill')
+      .setDescription('Team skill level (1-100, default: 50)')
+      .setMinValue(1)
+      .setMaxValue(100)
+      .setRequired(false)),
+
 ];
 
 async function registerCommands() {

@@ -28,6 +28,9 @@ const playoffMatchups = require('./playoffMatchups');
 const findSeries = require('./findSeries');
 const simulateSeries = require('./simulateSeries');
 const startSeason = require('./startSeason');
+const instagramPost = require('./instagramPost');
+const createBotTeam = require('./createBotTeam');
+
 
 // Export all handlers as a single object
 module.exports = {
@@ -59,5 +62,7 @@ module.exports = {
   playoffmatchups: playoffMatchups,
   findseries: findSeries,
   simulateseries: simulateSeries,
-  startseason: startSeason
+  startseason: startSeason,
+  instagram: instagramPost,
+  createbotteam: createBotTeam,
 };
